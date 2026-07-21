@@ -3,5 +3,5 @@ services:
     name: qual-e-a-nota
     runtime: node
     plan: free
-    buildCommand: npm run build
+    buildCommand: npm install && npm run build
     startCommand: npm start
