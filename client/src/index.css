@@ -439,3 +439,250 @@ label {
   font-size: 1.1rem;
   margin-bottom: 10px;
 }
+
+/* Mascote */
+
+.mascot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.mascot-face {
+  font-size: 2.6rem;
+  line-height: 1;
+}
+
+.mascot-caption {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+@keyframes mascot-bounce-idle-kf {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.mascot-bounce-idle {
+  animation: mascot-bounce-idle-kf 2.2s ease-in-out infinite;
+}
+
+@keyframes mascot-think-kf {
+  0%,
+  100% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(6deg);
+  }
+}
+
+.mascot-think {
+  animation: mascot-think-kf 1.6s ease-in-out infinite;
+}
+
+@keyframes mascot-bounce-happy-kf {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  30% {
+    transform: translateY(-16px) scale(1.15);
+  }
+  50% {
+    transform: translateY(0) scale(1);
+  }
+  70% {
+    transform: translateY(-8px) scale(1.08);
+  }
+}
+
+.mascot-bounce-happy {
+  animation: mascot-bounce-happy-kf 0.9s ease-in-out 2;
+}
+
+@keyframes mascot-shake-sad-kf {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0);
+  }
+  20% {
+    transform: translateX(-6px) rotate(-8deg);
+  }
+  40% {
+    transform: translateX(6px) rotate(8deg);
+  }
+  60% {
+    transform: translateX(-4px) rotate(-5deg);
+  }
+  80% {
+    transform: translateX(4px) rotate(5deg);
+  }
+}
+
+.mascot-shake-sad {
+  animation: mascot-shake-sad-kf 0.6s ease-in-out 2;
+}
+
+/* Transição suave entre fases */
+
+@keyframes phase-fade-in-kf {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.phase-transition {
+  width: 100%;
+  animation: phase-fade-in-kf 0.35s ease;
+}
+
+/* Suspense antes da revelação */
+
+@keyframes drumroll-kf {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  25% {
+    transform: translateY(-2px) rotate(-1.5deg);
+  }
+  75% {
+    transform: translateY(2px) rotate(1.5deg);
+  }
+}
+
+.balloons-grid.drumroll .balloon {
+  animation: drumroll-kf 0.22s ease-in-out infinite;
+}
+
+/* Balão de revelação */
+
+.reveal-balloon-stage {
+  display: flex;
+  justify-content: center;
+  margin: 4px 0 14px;
+  height: 90px;
+  overflow: visible;
+}
+
+.reveal-balloon {
+  width: 70px;
+  cursor: default;
+}
+
+@keyframes balloon-pop-kf {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  60% {
+    transform: translateY(-60px) scale(1.2);
+    opacity: 1;
+  }
+  75% {
+    transform: translateY(-70px) scale(1.5);
+    opacity: 1;
+  }
+  76% {
+    transform: translateY(-70px) scale(0.2);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(-70px) scale(0);
+    opacity: 0;
+  }
+}
+
+.balloon-pop {
+  animation: balloon-pop-kf 1s ease-in forwards;
+}
+
+@keyframes balloon-deflate-kf {
+  0% {
+    transform: translateY(0) scale(1) rotate(0);
+    opacity: 1;
+  }
+  40% {
+    transform: translateY(10px) scale(0.9, 1.1) rotate(-4deg);
+  }
+  100% {
+    transform: translateY(50px) scale(0.5, 0.3) rotate(8deg);
+    opacity: 0.3;
+  }
+}
+
+.balloon-deflate {
+  animation: balloon-deflate-kf 1.1s ease-in forwards;
+}
+
+/* Reações ao vivo */
+
+.reaction-picker {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 4px 0 4px;
+  flex-wrap: wrap;
+}
+
+.reaction-btn {
+  border: none;
+  background: #f4f2fd;
+  border-radius: 12px;
+  font-size: 1.3rem;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: transform 0.08s ease;
+}
+
+.reaction-btn:hover {
+  transform: scale(1.15);
+}
+
+.reaction-btn:active {
+  transform: scale(0.9);
+}
+
+.reaction-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 60;
+}
+
+.reaction-float {
+  position: absolute;
+  bottom: 10%;
+  font-size: 2rem;
+  animation: reaction-float-kf 2.1s ease-out forwards;
+}
+
+@keyframes reaction-float-kf {
+  0% {
+    transform: translate(0, 0) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    transform: translate(0, -10vh) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--drift, 0), -70vh) scale(1);
+    opacity: 0;
+  }
+}

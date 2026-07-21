@@ -37,8 +37,11 @@ export function GameProvider({ children }) {
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [guessSuspense, setGuessSuspense] = useState(false);
+  const [reactions, setReactions] = useState([]);
 
   const sessionRef = useRef(loadSession());
+  const suspenseTimerRef = useRef(null);
 
   const resetGameState = useCallback(() => {
     setPhase(PHASES.LOBBY);
@@ -101,6 +104,17 @@ export function GameProvider({ children }) {
       setQuestions(state.questions || {});
       setAnswers(state.answers || {});
       setResult(state.result || null);
+      if (state.phase !== PHASES.GUESSING && state.phase !== PHASES.REVEAL) {
+        clearTimeout(suspenseTimerRef.current);
+        setGuessSuspense(false);
+      }
+    }
+
+    function onReaction(reaction) {
+      setReactions((prev) => [...prev, reaction]);
+      setTimeout(() => {
+        setReactions((prev) => prev.filter((r) => r.id !== reaction.id));
+      }, 2200);
     }
 
     function onPlayerKicked({ playerId }) {
@@ -126,6 +140,7 @@ export function GameProvider({ children }) {
     socket.on('game_state', onGameState);
     socket.on('player_kicked', onPlayerKicked);
     socket.on('error', onError);
+    socket.on('reaction', onReaction);
 
     if (socket.connected) onConnect();
 
@@ -138,6 +153,7 @@ export function GameProvider({ children }) {
       socket.off('game_state', onGameState);
       socket.off('player_kicked', onPlayerKicked);
       socket.off('error', onError);
+      socket.off('reaction', onReaction);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -174,6 +190,16 @@ export function GameProvider({ children }) {
   const submitGuess = useCallback(
     (guess) => {
       socket.emit('submit_guess', { roomCode, guess });
+      setGuessSuspense(true);
+      clearTimeout(suspenseTimerRef.current);
+      suspenseTimerRef.current = setTimeout(() => setGuessSuspense(false), 1400);
+    },
+    [roomCode]
+  );
+
+  const sendReaction = useCallback(
+    (emoji) => {
+      socket.emit('send_reaction', { roomCode, emoji });
     },
     [roomCode]
   );
@@ -223,6 +249,9 @@ export function GameProvider({ children }) {
     answers,
     result,
     error,
+    guessSuspense,
+    reactions,
+    displayPhase: phase === PHASES.REVEAL && guessSuspense ? PHASES.GUESSING : phase,
     isHost: myId != null && hostId === myId,
     isChooser: myId != null && chooserId === myId,
     createRoom,
@@ -236,6 +265,7 @@ export function GameProvider({ children }) {
     restartGame,
     kickPlayer,
     leaveRoom,
+    sendReaction,
     clearError: () => setError(null),
   };
 

@@ -9,4 +9,5 @@ export const CONFIG = {
   NOTE_MAX: 10,
   RECONNECT_GRACE: 30,
   ROOM_CODE_LENGTH: 4,
+  REACTIONS: ['😂', '😮', '👏', '❤️', '😢', '🔥'],
 };

@@ -10,6 +10,8 @@ export const PHASES = {
 export const NOTE_MIN = 1;
 export const NOTE_MAX = 10;
 
+export const REACTIONS = ['😂', '😮', '👏', '❤️', '😢', '🔥'];
+
 export const QUESTION_BANK = [
   'Qual é a sua comida favorita?',
   'Qual filme você reveria de novo sem pensar duas vezes?',

@@ -221,6 +221,20 @@ export class Room {
     return { ok: true };
   }
 
+  /** Reação rápida (emoji) na tela de revelação. Sem histórico — só um relay efêmero. */
+  sendReaction(playerId, emoji) {
+    if (this.state !== 'reveal') return;
+    if (!CONFIG.REACTIONS.includes(emoji)) return;
+    const player = this.players.get(playerId);
+    if (!player) return;
+    this.io.to(this.code).emit('reaction', {
+      id: `${playerId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      playerId,
+      playerName: player.name,
+      emoji,
+    });
+  }
+
   // ---------- Serialização ----------
 
   _questionsObject() {

@@ -1,9 +1,13 @@
 import { useGame } from '../context/GameContext.jsx';
 import PlayerList from '../components/PlayerList.jsx';
 import RevealAnimation from '../components/RevealAnimation.jsx';
+import RevealBalloon from '../components/RevealBalloon.jsx';
+import ReactionOverlay from '../components/ReactionOverlay.jsx';
+import { REACTIONS } from '../constants.js';
 
 export default function RevealScreen() {
-  const { players, hostId, myId, chooserId, round, result, isHost, nextRound, endGame } = useGame();
+  const { players, hostId, myId, chooserId, round, result, isHost, nextRound, endGame, reactions, sendReaction } =
+    useGame();
   const chooser = players.find((p) => p.id === chooserId);
 
   if (!result) return null;
@@ -11,7 +15,9 @@ export default function RevealScreen() {
   return (
     <div className="card">
       <RevealAnimation key={`${round}-${result.correct}`} correct={result.correct} />
+      <ReactionOverlay reactions={reactions} />
       <div className="section-title">Rodada {round}</div>
+      <RevealBalloon key={`${round}-balloon`} number={result.guess} correct={result.correct} />
       <div className="reveal-result">
         <div className={`verdict ${result.correct ? 'correct' : 'wrong'}`}>
           {result.correct ? `🎉 ${chooser?.name ?? 'O jogador'} acertou!` : `😢 ${chooser?.name ?? 'O jogador'} errou!`}
@@ -19,6 +25,14 @@ export default function RevealScreen() {
         <div className="numbers">
           Nota real: <strong>{result.note}</strong> — Palpite: <strong>{result.guess}</strong>
         </div>
+      </div>
+
+      <div className="reaction-picker">
+        {REACTIONS.map((emoji) => (
+          <button key={emoji} type="button" className="reaction-btn" onClick={() => sendReaction(emoji)}>
+            {emoji}
+          </button>
+        ))}
       </div>
 
       <div className="section-title" style={{ marginTop: 18 }}>

@@ -1,4 +1,5 @@
 import { useGame } from '../context/GameContext.jsx';
+import AnimatedNumber from '../components/AnimatedNumber.jsx';
 
 export default function GameOverScreen() {
   const { players, isHost, restartGame, leaveRoom } = useGame();
@@ -15,7 +16,9 @@ export default function GameOverScreen() {
             <span>
               {i + 1}º {p.name}
             </span>
-            <span>{p.score} pt{p.score === 1 ? '' : 's'}</span>
+            <span>
+              <AnimatedNumber value={p.score} /> pt{p.score === 1 ? '' : 's'}
+            </span>
           </li>
         ))}
       </ul>

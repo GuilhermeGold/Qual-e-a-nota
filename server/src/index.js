@@ -104,6 +104,12 @@ io.on('connection', (socket) => {
     if (result?.error) socket.emit('error', { message: result.error });
   });
 
+  socket.on('send_reaction', ({ roomCode, emoji } = {}) => {
+    const room = roomManager.getRoom(roomCode);
+    if (!room) return;
+    room.sendReaction(socket.id, emoji);
+  });
+
   socket.on('next_round', ({ roomCode } = {}) => {
     const room = roomManager.getRoom(roomCode);
     if (!room) return socket.emit('error', { message: 'Sala não encontrada.' });

@@ -38,8 +38,10 @@ export default function GuessingScreen() {
 
       {isChooser ? (
         <>
-          <p className="waiting-text" style={{ padding: '4px 0' }}>Qual foi a nota da rodada?</p>
-          <div className="balloons-grid">
+          <p className="waiting-text" style={{ padding: '4px 0' }}>
+            {sent ? 'Revelando...' : 'Qual foi a nota da rodada?'}
+          </p>
+          <div className={`balloons-grid ${sent ? 'drumroll' : ''}`}>
             {numbers.map((n) => (
               <Balloon key={n} number={n} selected={selected === n} disabled={sent} onClick={handlePick} />
             ))}
