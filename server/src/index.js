@@ -97,6 +97,13 @@ io.on('connection', (socket) => {
     if (result?.error) socket.emit('error', { message: result.error });
   });
 
+  socket.on('submit_answer_ratings', ({ roomCode, ratings } = {}) => {
+    const room = roomManager.getRoom(roomCode);
+    if (!room) return socket.emit('error', { message: 'Sala não encontrada.' });
+    const result = room.submitAnswerRatings(socket.id, ratings);
+    if (result?.error) socket.emit('error', { message: result.error });
+  });
+
   socket.on('submit_guess', ({ roomCode, guess } = {}) => {
     const room = roomManager.getRoom(roomCode);
     if (!room) return socket.emit('error', { message: 'Sala não encontrada.' });

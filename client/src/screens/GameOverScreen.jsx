@@ -2,7 +2,7 @@ import { useGame } from '../context/GameContext.jsx';
 import AnimatedNumber from '../components/AnimatedNumber.jsx';
 
 export default function GameOverScreen() {
-  const { players, isHost, restartGame, leaveRoom } = useGame();
+  const { players, isHost, restartGame, leaveRoom, bestStreak } = useGame();
   const ranked = [...players].sort((a, b) => b.score - a.score);
 
   return (
@@ -10,6 +10,11 @@ export default function GameOverScreen() {
       <div className="section-title" style={{ textAlign: 'center' }}>
         🏆 Fim de jogo!
       </div>
+      {bestStreak >= 2 ? (
+        <p className="waiting-text" style={{ padding: '0 0 12px' }}>
+          🔥 Melhor sequência do grupo: {bestStreak} acertos seguidos
+        </p>
+      ) : null}
       <ul className="leaderboard">
         {ranked.map((p, i) => (
           <li key={p.id}>

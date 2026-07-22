@@ -14,6 +14,10 @@ function getMood({ phase, isChooser, answered, result }) {
       return answered
         ? { emoji: '😌', caption: 'Já respondi!', anim: 'mascot-bounce-idle' }
         : { emoji: '✍️', caption: 'Escrevendo...', anim: 'mascot-think' };
+    case PHASES.RATING:
+      return isChooser
+        ? { emoji: '🧐', caption: 'Avaliando cada resposta...', anim: 'mascot-think' }
+        : { emoji: '👀', caption: 'Aguardando avaliação...', anim: 'mascot-bounce-idle' };
     case PHASES.GUESSING:
       return isChooser
         ? { emoji: '🧐', caption: 'Qual será a nota?', anim: 'mascot-think' }

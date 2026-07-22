@@ -4,7 +4,8 @@ import Balloon from '../components/Balloon.jsx';
 import { NOTE_MIN, NOTE_MAX } from '../constants.js';
 
 export default function GuessingScreen() {
-  const { players, myId, isChooser, chooserId, round, questions, answers, submitGuess } = useGame();
+  const { players, myId, isChooser, chooserId, round, questions, answers, answerGuesses, suggestedGuess, submitGuess } =
+    useGame();
   const [selected, setSelected] = useState(null);
   const [sent, setSent] = useState(false);
 
@@ -30,7 +31,10 @@ export default function GuessingScreen() {
             <div key={id} className="answer-item">
               <div className="q">{questions[id]}</div>
               <div className="who">{player?.name ?? '???'}</div>
-              <div className="a">{answer?.text}</div>
+              <div className="a">
+                {answer?.text}
+                {answerGuesses[id] ? <span className="rating-hint"> — nota {answerGuesses[id]}</span> : null}
+              </div>
             </div>
           );
         })}
@@ -39,11 +43,22 @@ export default function GuessingScreen() {
       {isChooser ? (
         <>
           <p className="waiting-text" style={{ padding: '4px 0' }}>
-            {sent ? 'Revelando...' : 'Qual foi a nota da rodada?'}
+            {sent
+              ? 'Revelando...'
+              : suggestedGuess
+              ? `Qual foi a nota da rodada? Baseado nas suas avaliações, achamos que pode ser ${suggestedGuess}.`
+              : 'Qual foi a nota da rodada?'}
           </p>
           <div className={`balloons-grid ${sent ? 'drumroll' : ''}`}>
             {numbers.map((n) => (
-              <Balloon key={n} number={n} selected={selected === n} disabled={sent} onClick={handlePick} />
+              <Balloon
+                key={n}
+                number={n}
+                selected={selected === n}
+                suggested={!sent && n === suggestedGuess}
+                disabled={sent}
+                onClick={handlePick}
+              />
             ))}
           </div>
         </>

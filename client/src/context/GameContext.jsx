@@ -35,10 +35,14 @@ export function GameProvider({ children }) {
   const [note, setNote] = useState(null);
   const [questions, setQuestions] = useState({});
   const [answers, setAnswers] = useState({});
+  const [answerGuesses, setAnswerGuesses] = useState({});
+  const [suggestedGuess, setSuggestedGuess] = useState(null);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [guessSuspense, setGuessSuspense] = useState(false);
   const [reactions, setReactions] = useState([]);
+  const [streak, setStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
 
   const sessionRef = useRef(loadSession());
   const suspenseTimerRef = useRef(null);
@@ -50,7 +54,11 @@ export function GameProvider({ children }) {
     setNote(null);
     setQuestions({});
     setAnswers({});
+    setAnswerGuesses({});
+    setSuggestedGuess(null);
     setResult(null);
+    setStreak(0);
+    setBestStreak(0);
   }, []);
 
   useEffect(() => {
@@ -103,7 +111,11 @@ export function GameProvider({ children }) {
       setNote(state.note);
       setQuestions(state.questions || {});
       setAnswers(state.answers || {});
+      setAnswerGuesses(state.answerGuesses || {});
+      setSuggestedGuess(state.suggestedGuess ?? null);
       setResult(state.result || null);
+      setStreak(state.streak ?? 0);
+      setBestStreak(state.bestStreak ?? 0);
       if (state.phase !== PHASES.GUESSING && state.phase !== PHASES.REVEAL) {
         clearTimeout(suspenseTimerRef.current);
         setGuessSuspense(false);
@@ -187,6 +199,13 @@ export function GameProvider({ children }) {
     [roomCode]
   );
 
+  const submitAnswerRatings = useCallback(
+    (ratingsByTarget) => {
+      socket.emit('submit_answer_ratings', { roomCode, ratings: ratingsByTarget });
+    },
+    [roomCode]
+  );
+
   const submitGuess = useCallback(
     (guess) => {
       socket.emit('submit_guess', { roomCode, guess });
@@ -247,10 +266,14 @@ export function GameProvider({ children }) {
     note,
     questions,
     answers,
+    answerGuesses,
+    suggestedGuess,
     result,
     error,
     guessSuspense,
     reactions,
+    streak,
+    bestStreak,
     displayPhase: phase === PHASES.REVEAL && guessSuspense ? PHASES.GUESSING : phase,
     isHost: myId != null && hostId === myId,
     isChooser: myId != null && chooserId === myId,
@@ -259,6 +282,7 @@ export function GameProvider({ children }) {
     startGame,
     submitQuestions,
     submitAnswer,
+    submitAnswerRatings,
     submitGuess,
     nextRound,
     endGame,

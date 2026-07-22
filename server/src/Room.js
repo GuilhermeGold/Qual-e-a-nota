@@ -23,7 +23,11 @@ export class Room {
     this.currentNote = null;
     this.questions = new Map(); // targetId -> pergunta
     this.answers = new Map(); // targetId -> { question, text }
+    this.answerGuesses = new Map(); // targetId -> nota que o escolhido deu pra aquela resposta
+    this.suggestedGuess = null; // nota geral sugerida (moda das notas por resposta)
     this.lastResult = null;
+    this.streak = 0; // acertos seguidos do grupo (qualquer escolhido)
+    this.bestStreak = 0;
   }
 
   // ---------- Jogadores ----------
@@ -40,6 +44,7 @@ export class Room {
     this.players.delete(playerId);
     this.questions.delete(playerId);
     this.answers.delete(playerId);
+    this.answerGuesses.delete(playerId);
     this.chooserPool = this.chooserPool.filter((id) => id !== playerId);
 
     if (this.hostId === playerId) {
@@ -52,7 +57,7 @@ export class Room {
         // O escolhido saiu no meio da rodada: recomeça com um novo escolhido.
         this._beginRound();
       } else if (this.state === 'answering' && this.answers.size >= this.questions.size && this.questions.size > 0) {
-        this.state = 'guessing';
+        this.state = 'rating';
         this.broadcastState();
       } else {
         this.broadcastState();
@@ -91,6 +96,10 @@ export class Room {
       this.answers.set(newSocketId, this.answers.get(oldId));
       this.answers.delete(oldId);
     }
+    if (this.answerGuesses.has(oldId)) {
+      this.answerGuesses.set(newSocketId, this.answerGuesses.get(oldId));
+      this.answerGuesses.delete(oldId);
+    }
     return player;
   }
 
@@ -100,6 +109,8 @@ export class Room {
     if (this.state !== 'lobby') return;
     for (const p of this.players.values()) p.score = 0;
     this.round = 1;
+    this.streak = 0;
+    this.bestStreak = 0;
     this.chooserPool = shuffle([...this.players.keys()]);
     this.io.to(this.code).emit('game_started', {});
     this._beginRound();
@@ -113,7 +124,11 @@ export class Room {
     this.currentNote = null;
     this.questions = new Map();
     this.answers = new Map();
+    this.answerGuesses = new Map();
+    this.suggestedGuess = null;
     this.lastResult = null;
+    this.streak = 0;
+    this.bestStreak = 0;
     for (const p of this.players.values()) p.score = 0;
   }
 
@@ -139,6 +154,8 @@ export class Room {
     this.currentNote = pickRandomNote();
     this.questions = new Map();
     this.answers = new Map();
+    this.answerGuesses = new Map();
+    this.suggestedGuess = null;
     this.lastResult = null;
     this.state = 'assigning';
     this.broadcastState();
@@ -178,10 +195,54 @@ export class Room {
     this.answers.set(playerId, { question: this.questions.get(playerId), text: trimmed });
 
     if (this.answers.size >= this.questions.size) {
-      this.state = 'guessing';
+      this.state = 'rating';
     }
     this.broadcastState();
     return { ok: true };
+  }
+
+  /**
+   * O escolhido dá uma nota (1-10) pra cada resposta, de uma vez. Isso alimenta
+   * uma sugestão de nota geral (a moda das notas por resposta) pra reduzir o
+   * atrito de decisão na tela seguinte — ele só confirma ou troca o balão.
+   */
+  submitAnswerRatings(chooserId, ratingsByTarget) {
+    if (this.state !== 'rating') return { error: 'Fase de avaliação não está ativa.' };
+    if (chooserId !== this.currentChooserId) return { error: 'Só o jogador escolhido pode avaliar as respostas.' };
+    if (!ratingsByTarget || typeof ratingsByTarget !== 'object') {
+      return { error: 'Avaliações inválidas.' };
+    }
+
+    const targetIds = [...this.answers.keys()];
+    const cleaned = new Map();
+    for (const targetId of targetIds) {
+      const raw = Number(ratingsByTarget[targetId]);
+      if (!Number.isInteger(raw) || raw < CONFIG.NOTE_MIN || raw > CONFIG.NOTE_MAX) {
+        return { error: 'Toda resposta precisa de uma nota entre 1 e 10.' };
+      }
+      cleaned.set(targetId, raw);
+    }
+
+    this.answerGuesses = cleaned;
+    this.suggestedGuess = this._computeSuggestedGuess(cleaned);
+    this.state = 'guessing';
+    this.broadcastState();
+    return { ok: true };
+  }
+
+  /** Moda das notas por resposta; empate resolvido pelo menor valor, pra ser determinístico. */
+  _computeSuggestedGuess(ratingsMap) {
+    const counts = new Map();
+    for (const value of ratingsMap.values()) counts.set(value, (counts.get(value) || 0) + 1);
+    let best = null;
+    let bestCount = 0;
+    for (const [value, count] of counts.entries()) {
+      if (count > bestCount || (count === bestCount && (best === null || value < best))) {
+        best = value;
+        bestCount = count;
+      }
+    }
+    return best;
   }
 
   submitGuess(chooserId, guess) {
@@ -192,12 +253,38 @@ export class Room {
       return { error: 'Palpite inválido.' };
     }
 
+    const streakBefore = this.streak;
     const correct = guessNum === this.currentNote;
     if (correct) {
       const chooser = this.players.get(chooserId);
       if (chooser) chooser.score += 1;
+      this.streak += 1;
+      this.bestStreak = Math.max(this.bestStreak, this.streak);
+    } else {
+      this.streak = 0;
     }
-    this.lastResult = { correct, guess: guessNum, note: this.currentNote, chooserId };
+
+    // Cada respondente ganha ponto se a nota que o escolhido deu pra RESPOSTA
+    // DELE bateu com a nota real — independente do resultado do palpite geral.
+    const answerResults = {};
+    for (const [targetId, rating] of this.answerGuesses.entries()) {
+      const targetCorrect = rating === this.currentNote;
+      answerResults[targetId] = targetCorrect;
+      if (targetCorrect) {
+        const responder = this.players.get(targetId);
+        if (responder) responder.score += 1;
+      }
+    }
+
+    this.lastResult = {
+      correct,
+      guess: guessNum,
+      note: this.currentNote,
+      chooserId,
+      streakBefore,
+      answerGuesses: Object.fromEntries(this.answerGuesses),
+      answerResults,
+    };
     this.state = 'reveal';
     this.broadcastState();
     return { ok: true };
@@ -245,6 +332,10 @@ export class Room {
     return Object.fromEntries(this.answers);
   }
 
+  _answerGuessesObject() {
+    return Object.fromEntries(this.answerGuesses);
+  }
+
   /** A nota só é visível pra quem não é o escolhido da rodada (ou pra todos, no reveal/lobby/fim). */
   _noteFor(playerId) {
     if (this.state === 'lobby') return null;
@@ -260,7 +351,11 @@ export class Room {
       chooserId: this.currentChooserId,
       questions: this._questionsObject(),
       answers: this._answersObject(),
+      answerGuesses: this._answerGuessesObject(),
+      suggestedGuess: this.suggestedGuess,
       result: this.state === 'reveal' ? this.lastResult : null,
+      streak: this.streak,
+      bestStreak: this.bestStreak,
     };
     for (const playerId of this.players.keys()) {
       this.io.to(playerId).emit('game_state', { ...base, note: this._noteFor(playerId) });

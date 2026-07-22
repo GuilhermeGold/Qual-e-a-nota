@@ -2,6 +2,7 @@ export const PHASES = {
   LOBBY: 'lobby',
   ASSIGNING: 'assigning',
   ANSWERING: 'answering',
+  RATING: 'rating',
   GUESSING: 'guessing',
   REVEAL: 'reveal',
   GAME_OVER: 'game_over',

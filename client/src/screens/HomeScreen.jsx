@@ -66,6 +66,22 @@ export default function HomeScreen() {
           {mode === 'create' ? 'Criar sala' : 'Entrar'}
         </button>
       </form>
+
+      <div className="rules-box">
+        <div className="section-title">Como jogar</div>
+        <ul className="rules-list">
+          <li>A cada rodada, um jogador é sorteado como <strong>escolhido</strong> — sem repetir até todos passarem.</li>
+          <li>Todos os outros veem uma nota secreta de 1 a 10 sorteada pra rodada; só o escolhido não vê.</li>
+          <li>O escolhido manda uma pergunta pra cada um dos outros jogadores.</li>
+          <li>Cada jogador responde pensando em algo que, na sua opinião, seria daquela nota.</li>
+          <li>O escolhido dá uma nota pra cada resposta e depois escolhe a nota geral da rodada.</li>
+          <li>
+            <strong>Pontuação:</strong> +1 pro escolhido se acertar a nota geral; +1 pra cada jogador cuja
+            resposta recebeu a nota certa — mesmo que o escolhido erre no geral.
+          </li>
+          <li>Acertos seguidos do grupo formam uma sequência; errar reinicia o contador.</li>
+        </ul>
+      </div>
     </div>
   );
 }
